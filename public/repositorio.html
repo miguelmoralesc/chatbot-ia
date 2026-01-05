@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repositorio Normativo - Autoevaluación Académica</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            background: #e9ecef;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #495057;
+            transition: all 0.3s;
+        }
+
+        .nav-tab:hover {
+            background: #dee2e6;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: #2a5298;
+            border-bottom: 3px solid #2a5298;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 2px dashed #ced4da;
+        }
+
+        .upload-section h3 {
+            color: #2a5298;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 12px 20px;
+            background: #28a745;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .file-input-label:hover {
+            background: #218838;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .documents-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .document-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .document-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .document-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .document-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2a5298;
+            margin-bottom: 5px;
+        }
+
+        .document-meta {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+
+        .document-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .badge-normativo {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-general {
+            background: #6c757d;
+            color: white;
+        }
+
+        .badge-categoria {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .analysis-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .analysis-section h4 {
+            color: #2a5298;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .analysis-section p {
+            color: #495057;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin: 20px;
+            padding: 10px 20px;
+            background: white;
+            color: #2a5298;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: #f8f9fa;
+            transform: translateX(-5px);
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .document-header {
+                flex-direction: column;
+            }
+
+            .document-actions {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Volver al Chat</a>
+
+    <div class="container">
+        <div class="header">
+            <h1>📚 Repositorio Normativo</h1>
+            <p>Gestión de documentos normativos y evidencias institucionales</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('upload')">📤 Subir Documento</button>
+            <button class="nav-tab" onclick="switchTab('list')">📋 Listar Documentos</button>
+        </div>
+
+        <div class="content">
+            <!-- TAB: SUBIR DOCUMENTO -->
+            <div id="tab-upload" class="tab-content active">
+                <div class="upload-section">
+                    <h3>Subir Nuevo Documento al Repositorio</h3>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="tipoDocumento">Tipo de Documento *</label>
+                            <select id="tipoDocumento" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Decreto">Decreto</option>
+                                <option value="Resolución">Resolución</option>
+                                <option value="Acuerdo">Acuerdo</option>
+                                <option value="Lineamiento CNA">Lineamiento CNA</option>
+                                <option value="Guía MEN">Guía MEN</option>
+                                <option value="Normatividad Institucional">Normatividad Institucional</option>
+                                <option value="Informe Autoevaluación">Informe Autoevaluación</option>
+                                <option value="Plan de Mejoramiento">Plan de Mejoramiento</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="categoria">Categoría *</label>
+                            <select id="categoria" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Normatividad Nacional">Normatividad Nacional</option>
+                                <option value="Normatividad Institucional">Normatividad Institucional</option>
+                                <option value="Lineamientos CNA">Lineamientos CNA</option>
+                                <option value="Registro Calificado">Registro Calificado</option>
+                                <option value="Acreditación">Acreditación</option>
+                                <option value="Condiciones de Calidad">Condiciones de Calidad</option>
+                                <option value="Factor 1 - Misión">Factor 1 - Misión</option>
+                                <option value="Factor 2 - Estudiantes">Factor 2 - Estudiantes</option>
+                                <option value="Factor 3 - Profesores">Factor 3 - Profesores</option>
+                                <option value="Factor 4 - Procesos">Factor 4 - Procesos</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="esNormativo">¿Es documento normativo?</label>
+                            <select id="esNormativo">
+                                <option value="true">Sí</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="descripcion">Descripción (opcional)</label>
+                        <textarea id="descripcion" placeholder="Breve descripción del documento, número de norma, fecha de expedición, etc."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Seleccionar Archivo *</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" required>
+                            <label for="fileInput" class="file-input-label">📎 Seleccionar Archivo</label>
+                        </div>
+                        <p id="fileName" style="margin-top: 10px; color: #6c757d; font-size: 0.9rem;">Ningún archivo seleccionado</p>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="uploadDocument()">📤 Subir al Repositorio</button>
+                </div>
+
+                <div id="uploadAlert"></div>
+                <div id="analysisResult"></div>
+            </div>
+
+            <!-- TAB: LISTAR DOCUMENTOS -->
+            <div id="tab-list" class="tab-content">
+                <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="loadDocuments()">🔄 Actualizar Lista</button>
+                    <select id="filterCategoria" onchange="loadDocuments()" style="padding: 10px; border-radius: 6px; border: 1px solid #ced4da;">
+                        <option value="">Todas las categorías</option>
+                        <option value="Normatividad Nacional">Normatividad Nacional</option>
+                        <option value="Lineamientos CNA">Lineamientos CNA</option>
+                        <option value="Registro Calificado">Registro Calificado</option>
+                        <option value="Acreditación">Acreditación</option>
+                    </select>
+                    <select id="filterNormativo" onchange="loadDocuments()" style="padding: 10px; border-radius: 6px; border: 1px solid #ced4da;">
+                        <option value="">Todos los tipos</option>
+                        <option value="true">Solo normativos</option>
+                        <option value="false">Solo no normativos</option>
+                    </select>
+                </div>
+
+                <div id="documentsList" class="documents-list">
+                    <div class="loading">Cargando documentos...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+
+        // Actualizar nombre de archivo seleccionado
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                fileName.textContent = `📄 ${file.name}`;
+            } else {
+                fileName.textContent = 'Ningún archivo seleccionado';
+            }
+        });
+
+        // Cambiar entre tabs
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'list') {
+                loadDocuments();
+            }
+        }
+
+        // Subir documento al repositorio
+        async function uploadDocument() {
+            const file = fileInput.files[0];
+            const tipoDocumento = document.getElementById('tipoDocumento').value;
+            const categoria = document.getElementById('categoria').value;
+            const esNormativo = document.getElementById('esNormativo').value;
+            const descripcion = document.getElementById('descripcion').value;
+
+            if (!file) {
+                showAlert('Por favor selecciona un archivo', 'error', 'uploadAlert');
+                return;
+            }
+
+            if (!tipoDocumento || !categoria) {
+                showAlert('Por favor completa todos los campos obligatorios', 'error', 'uploadAlert');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('document', file);
+            formData.append('tipoDocumento', tipoDocumento);
+            formData.append('categoria', categoria);
+            formData.append('esNormativo', esNormativo);
+            formData.append('descripcion', descripcion);
+
+            try {
+                showAlert('📤 Subiendo y analizando documento... Por favor espera.', 'info', 'uploadAlert');
+
+                const response = await fetch('/api/repositorio/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert(`✅ Documento subido exitosamente: ${data.nombreArchivo}`, 'success', 'uploadAlert');
+                    
+                    // Mostrar análisis IA
+                    if (data.analisisIA) {
+                        document.getElementById('analysisResult').innerHTML = `
+                            <div class="analysis-section">
+                                <h4>📊 Análisis del Documento (IA)</h4>
+                                <p>${data.analisisIA.replace(/\n/g, '<br>')}</p>
+                            </div>
+                        `;
+                    }
+
+                    // Limpiar formulario
+                    fileInput.value = '';
+                    fileName.textContent = 'Ningún archivo seleccionado';
+                    document.getElementById('descripcion').value = '';
+                } else {
+                    showAlert(`❌ Error: ${data.error}`, 'error', 'uploadAlert');
+                }
+            } catch (error) {
+                showAlert('❌ Error de conexión al subir documento', 'error', 'uploadAlert');
+            }
+        }
+
+        // Cargar lista de documentos
+        async function loadDocuments() {
+            const categoria = document.getElementById('filterCategoria')?.value || '';
+            const esNormativo = document.getElementById('filterNormativo')?.value || '';
+
+            const documentsList = document.getElementById('documentsList');
+            documentsList.innerHTML = '<div class="loading">Cargando documentos...</div>';
+
+            try {
+                let url = '/api/repositorio/list?';
+                if (categoria) url += `categoria=${encodeURIComponent(categoria)}&`;
+                if (esNormativo) url += `esNormativo=${esNormativo}`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (response.ok && data.documentos.length > 0) {
+                    documentsList.innerHTML = '';
+                    data.documentos.forEach(doc => {
+                        const card = createDocumentCard(doc);
+                        documentsList.innerHTML += card;
+                    });
+                } else {
+                    documentsList.innerHTML = '<div class="alert alert-info">No se encontraron documentos con los filtros seleccionados.</div>';
+                }
+            } catch (error) {
+                documentsList.innerHTML = '<div class="alert alert-error">❌ Error al cargar documentos</div>';
+            }
+        }
+
+        // Crear tarjeta de documento
+        function createDocumentCard(doc) {
+            const fecha = new Date(doc.fechaCarga).toLocaleDateString('es-CO');
+            
+            return `
+                <div class="document-card">
+                    <div class="document-header">
+                        <div>
+                            <div class="document-title">📄 ${doc.nombreArchivo}</div>
+                            <div class="document-meta">
+                                <span class="badge badge-${doc.esNormativo ? 'normativo' : 'general'}">
+                                    ${doc.esNormativo ? 'Normativo' : 'General'}
+                                </span>
+                                <span class="badge badge-categoria">${doc.categoria}</span>
+                                <span class="badge" style="background: #6c757d; color: white;">${doc.tipoDocumento}</span>
+                            </div>
+                            <div class="document-meta">
+                                Cargado: ${fecha} | ${doc.caracteresExtraidos.toLocaleString()} caracteres | ${doc.paginas || 'N/A'} páginas
+                            </div>
+                            ${doc.descripcion ? `<p style="margin-top: 10px; color: #495057; font-size: 0.9rem;">${doc.descripcion}</p>` : ''}
+                        </div>
+                        <div class="document-actions">
+                            <button class="btn btn-warning" onclick="viewDocument('${doc._id}')">👁️ Ver</button>
+                            <button class="btn btn-danger" onclick="deleteDocument('${doc._id}', '${doc.nombreArchivo}')">🗑️ Eliminar</button>
+                        </div>
+                    </div>
+                    ${doc.analisisIA ? `
+                        <div class="analysis-section">
+                            <h4>📊 Análisis IA</h4>
+                            <p>${doc.analisisIA.substring(0, 500)}...</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // Ver documento completo
+        async function viewDocument(documentoId) {
+            try {
+                const response = await fetch(`/api/repositorio/${documentoId}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(`Documento: ${data.documento.nombreArchivo}\n\nAnálisis completo:\n\n${data.documento.analisisIA || 'No disponible'}`);
+                }
+            } catch (error) {
+                alert('Error al cargar documento');
+            }
+        }
+
+        // Eliminar documento
+        async function deleteDocument(documentoId, nombreArchivo) {
+            if (!confirm(`¿Estás seguro de eliminar el documento "${nombreArchivo}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/repositorio/${documentoId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('✅ Documento eliminado exitosamente');
+                    loadDocuments();
+                } else {
+                    alert('❌ Error al eliminar documento');
+                }
+            } catch (error) {
+                alert('❌ Error de conexión');
+            }
+        }
+
+        // Mostrar alertas
+        function showAlert(message, type, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 8000);
+        }
+
+        // Cargar documentos al iniciar
+        // loadDocuments();
+    </script>
+</body>
+</html>

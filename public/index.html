@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistente Virtual IA</title>
+    <title>Asistente Virtual - Autoevaluación Académica</title>
     <style>
         * {
             margin: 0;
@@ -21,9 +21,9 @@
             padding: 20px;
         }
 
-        .chat-container {
+        .container {
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
             height: 90vh;
             background: white;
             border-radius: 20px;
@@ -33,120 +33,241 @@
             overflow: hidden;
         }
 
-        .chat-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
-            padding: 20px;
+            padding: 25px;
             text-align: center;
+            border-bottom: 3px solid #f39c12;
         }
 
-        .chat-header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            font-weight: 600;
         }
 
-        .chat-header p {
-            font-size: 14px;
+        .header p {
+            font-size: 0.85rem;
             opacity: 0.9;
+            line-height: 1.4;
         }
 
-        .chat-messages {
+        .config-section {
+            background: #f8f9fa;
+            padding: 15px 25px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .config-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .config-row input, .config-row select {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s;
+        }
+
+        .config-row input:focus, .config-row select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .upload-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
             flex: 1;
-            padding: 20px;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 8px 15px;
+            background: #28a745;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        .file-input-label:hover {
+            background: #218838;
+        }
+
+        .file-name {
+            font-size: 0.85rem;
+            color: #495057;
+            flex: 2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-container {
+            flex: 1;
             overflow-y: auto;
-            background: #f5f5f5;
+            padding: 25px;
+            background: #f8f9fa;
         }
 
         .message {
-            margin-bottom: 15px;
-            display: flex;
-            animation: fadeIn 0.3s;
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease-in;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .message.user {
+        .message-user {
+            display: flex;
             justify-content: flex-end;
         }
 
-        .message-content {
-            max-width: 70%;
-            padding: 12px 18px;
-            border-radius: 18px;
-            word-wrap: break-word;
+        .message-bot {
+            display: flex;
+            justify-content: flex-start;
         }
 
-        .message.user .message-content {
+        .message-content {
+            max-width: 75%;
+            padding: 15px 18px;
+            border-radius: 18px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .message-user .message-content {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-bot .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .message-bot .message-content strong {
+            color: #2a5298;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .badge-verified {
+            background: #28a745;
             color: white;
         }
 
-        .message.bot .message-content {
-            background: white;
+        .badge-inference {
+            background: #ffc107;
             color: #333;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        .chat-input-container {
-            padding: 20px;
+        .badge-requires {
+            background: #dc3545;
+            color: white;
+        }
+
+        .input-container {
+            padding: 20px 25px;
             background: white;
-            border-top: 1px solid #e0e0e0;
+            border-top: 1px solid #dee2e6;
             display: flex;
             gap: 10px;
         }
 
-        #messageInput {
+        #userInput {
             flex: 1;
             padding: 12px 18px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid #ced4da;
             border-radius: 25px;
-            font-size: 16px;
-            outline: none;
+            font-size: 0.95rem;
             transition: border-color 0.3s;
         }
 
-        #messageInput:focus {
+        #userInput:focus {
+            outline: none;
             border-color: #667eea;
         }
 
-        #sendButton {
+        #sendBtn {
             padding: 12px 30px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
             border-radius: 25px;
-            font-size: 16px;
             cursor: pointer;
-            transition: transform 0.2s;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        #sendButton:hover {
-            transform: scale(1.05);
+        #sendBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
-        #sendButton:disabled {
+        #sendBtn:active {
+            transform: translateY(0);
+        }
+
+        #sendBtn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
 
         .typing-indicator {
             display: none;
-            padding: 12px 18px;
+            padding: 15px;
             background: white;
             border-radius: 18px;
-            width: fit-content;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+            max-width: 70px;
         }
 
         .typing-indicator span {
-            height: 10px;
-            width: 10px;
-            background: #667eea;
-            border-radius: 50%;
             display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
             margin: 0 2px;
             animation: typing 1.4s infinite;
         }
@@ -160,105 +281,183 @@
         }
 
         @keyframes typing {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-10px); }
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
         }
 
-        .status {
-            padding: 10px;
-            text-align: center;
-            font-size: 12px;
-            color: #666;
-            background: #f9f9f9;
+        .alert {
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
         }
 
-        .status.connected {
-            color: #4caf50;
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
         }
 
-        .status.error {
-            color: #f44336;
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                height: 95vh;
+                border-radius: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.2rem;
+            }
+
+            .header p {
+                font-size: 0.75rem;
+            }
+
+            .config-row {
+                grid-template-columns: 1fr;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">
-            <h1>🤖 Asistente Virtual IA</h1>
-            <p>Tu chatbot inteligente personalizado</p>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Asistente Virtual - Autoevaluación Académica</h1>
+            <p>Sistema de apoyo para autoevaluación de programas según normatividad MEN y CNA</p>
+            <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <a href="/repositorio.html" style="display: inline-block; padding: 10px 25px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: all 0.3s; border: 2px solid rgba(255,255,255,0.3);" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">📚 Gestionar Repositorio Normativo</a>
+                <a href="/busqueda.html" style="display: inline-block; padding: 10px 25px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: all 0.3s; border: 2px solid rgba(255,255,255,0.3);" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">🔍 Búsqueda Avanzada</a>
+            </div>
         </div>
 
-        <div class="status" id="status">Conectando...</div>
 
-        <div class="chat-messages" id="chatMessages">
-            <div class="message bot">
+        <div class="config-section">
+            <div class="config-row">
+                <input type="text" id="programaInput" placeholder="Nombre del programa académico (opcional)">
+                <select id="nivelFormacion">
+                    <option value="">Nivel de formación (opcional)</option>
+                    <option value="Técnico Profesional">Técnico Profesional</option>
+                    <option value="Tecnológico">Tecnológico</option>
+                    <option value="Profesional Universitario">Profesional Universitario</option>
+                    <option value="Especialización">Especialización</option>
+                    <option value="Maestría">Maestría</option>
+                    <option value="Doctorado">Doctorado</option>
+                </select>
+                <select id="tipoProceso">
+                    <option value="">Tipo de proceso (opcional)</option>
+                    <option value="Registro Calificado">Registro Calificado</option>
+                    <option value="Acreditación Alta Calidad">Acreditación Alta Calidad</option>
+                    <option value="Renovación Registro">Renovación Registro</option>
+                    <option value="Renovación Acreditación">Renovación Acreditación</option>
+                </select>
+            </div>
+
+            <div class="upload-section">
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">
+                    <label for="fileInput" class="file-input-label">📎 Adjuntar Evidencia</label>
+                </div>
+                <span class="file-name" id="fileName">Ningún archivo seleccionado</span>
+            </div>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="message message-bot">
                 <div class="message-content">
-                    ¡Hola! 👋 Soy tu asistente virtual. Puedo ayudarte con información sobre nuestros servicios, horarios y contacto. ¿En qué puedo ayudarte hoy?
+                    <strong>🎓 Sistema de Autoevaluación Académica</strong><br><br>
+                    Bienvenido al asistente virtual para autoevaluación de programas académicos.<br><br>
+                    <span class="badge badge-verified">Verificado</span> Este sistema aplica normatividad MEN, CNA y CESU vigente.<br><br>
+                    Puedes:<br>
+                    • Consultar sobre factores, características y aspectos de evaluación<br>
+                    • Adjuntar evidencias documentales para análisis<br>
+                    • Solicitar verificación normativa actualizada<br>
+                    • Obtener orientación sobre estructura de informes<br><br>
+                    <strong>Nota:</strong> Todas las respuestas incluyen etiquetas de certeza según protocolo académico.
                 </div>
             </div>
         </div>
 
-        <div class="typing-indicator" id="typingIndicator">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-
-        <div class="chat-input-container">
-            <input 
-                type="text" 
-                id="messageInput" 
-                placeholder="Escribe tu mensaje aquí..."
-                autocomplete="off"
-            >
-            <button id="sendButton">Enviar</button>
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Escribe tu consulta académica..." autocomplete="off">
+            <button id="sendBtn">Enviar</button>
         </div>
     </div>
 
     <script>
-        const chatMessages = document.getElementById('chatMessages');
-        const messageInput = document.getElementById('messageInput');
-        const sendButton = document.getElementById('sendButton');
-        const typingIndicator = document.getElementById('typingIndicator');
-        const statusElement = document.getElementById('status');
+        const chatContainer = document.getElementById('chatContainer');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const programaInput = document.getElementById('programaInput');
+        const nivelFormacion = document.getElementById('nivelFormacion');
+        const tipoProceso = document.getElementById('tipoProceso');
 
         let conversationId = Date.now().toString();
+        let archivoAdjunto = null;
 
-        // Verificar conexión al cargar
-        checkHealth();
+        // Manejo de archivo
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-        async function checkHealth() {
+            fileName.textContent = `📄 ${file.name}`;
+            
+            const formData = new FormData();
+            formData.append('document', file);
+            formData.append('userId', conversationId);
+            formData.append('conversationId', conversationId);
+
             try {
-                const response = await fetch('/api/health');
+                showAlert('Procesando documento...', 'success');
+                
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
                 const data = await response.json();
                 
-                if (data.status === 'ok') {
-                    statusElement.textContent = '✅ Conectado';
-                    statusElement.className = 'status connected';
+                if (response.ok) {
+                    showAlert(`✅ Evidencia procesada: ${data.nombreArchivo} (${data.caracteresExtraidos} caracteres extraídos)`, 'success');
                 } else {
-                    statusElement.textContent = '⚠️ Conectado con limitaciones';
-                    statusElement.className = 'status';
+                    showAlert(`❌ Error: ${data.error}`, 'error');
                 }
             } catch (error) {
-                statusElement.textContent = '❌ Error de conexión';
-                statusElement.className = 'status error';
+                showAlert('❌ Error al procesar documento', 'error');
             }
-        }
+
+            fileInput.value = '';
+        });
 
         // Enviar mensaje
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
         async function sendMessage() {
-            const mensaje = messageInput.value.trim();
-            
-            if (!mensaje) return;
+            const message = userInput.value.trim();
+            if (!message) return;
 
-            // Agregar mensaje del usuario
-            addMessage(mensaje, 'user');
-            messageInput.value = '';
-            sendButton.disabled = true;
+            addMessage(message, 'user');
+            userInput.value = '';
+            sendBtn.disabled = true;
 
-            // Mostrar indicador de escritura
-            typingIndicator.style.display = 'block';
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            showTypingIndicator();
 
             try {
                 const response = await fetch('/api/chat', {
@@ -267,52 +466,77 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        mensaje: mensaje,
-                        conversationId: conversationId
+                        mensaje: message,
+                        conversationId: conversationId,
+                        userId: conversationId,
+                        programa: programaInput.value || null,
+                        nivelFormacion: nivelFormacion.value || null,
+                        tipoProceso: tipoProceso.value || null
                     })
                 });
 
                 const data = await response.json();
+                hideTypingIndicator();
 
                 if (response.ok) {
                     addMessage(data.respuesta, 'bot');
                 } else {
-                    addMessage('❌ Error: ' + (data.error || 'No se pudo procesar el mensaje'), 'bot');
+                    addMessage('❌ Error: ' + data.error, 'bot');
                 }
             } catch (error) {
-                addMessage('❌ Error de conexión. Verifica que el servidor esté ejecutándose.', 'bot');
-            } finally {
-                typingIndicator.style.display = 'none';
-                sendButton.disabled = false;
-                messageInput.focus();
+                hideTypingIndicator();
+                addMessage('❌ Error de conexión. Por favor, intenta nuevamente.', 'bot');
             }
+
+            sendBtn.disabled = false;
+            userInput.focus();
         }
 
-        // Agregar mensaje al chat
         function addMessage(text, sender) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}`;
-            
+            messageDiv.className = `message message-${sender}`;
+
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
-            contentDiv.textContent = text;
             
+            // Procesar etiquetas de certeza
+            let processedText = text
+                .replace(/\[Verificado en base de conocimientos\]/gi, '<span class="badge badge-verified">Verificado</span>')
+                .replace(/\[Inferencia\]/gi, '<span class="badge badge-inference">Inferencia</span>')
+                .replace(/\[Requiere verificación.*?\]/gi, '<span class="badge badge-requires">Requiere verificación</span>')
+                .replace(/\[Búsqueda requerida\]/gi, '<span class="badge badge-requires">Búsqueda requerida</span>');
+
+            contentDiv.innerHTML = processedText.replace(/\n/g, '<br>');
             messageDiv.appendChild(contentDiv);
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            chatContainer.appendChild(messageDiv);
+
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        // Event listeners
-        sendButton.addEventListener('click', sendMessage);
-        
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
+        function showTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.className = 'typing-indicator';
+            indicator.id = 'typingIndicator';
+            indicator.innerHTML = '<span></span><span></span><span></span>';
+            indicator.style.display = 'block';
+            chatContainer.appendChild(indicator);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
 
-        // Enfocar input al cargar
-        messageInput.focus();
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            chatContainer.appendChild(alert);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            setTimeout(() => alert.remove(), 5000);
+        }
     </script>
 </body>
 </html>

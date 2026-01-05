@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Búsqueda Avanzada - Autoevaluación Académica</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .search-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #ced4da;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-box button {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .search-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-tab {
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .search-tab.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .filters select, .filters input {
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .results-count {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2a5298;
+        }
+
+        .btn-export {
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-export:hover {
+            background: #218838;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .result-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .result-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2a5298;
+            margin-bottom: 10px;
+        }
+
+        .result-snippet {
+            color: #495057;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .result-meta {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-repositorio {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-conversacion {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .badge-evidencia {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .no-results h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin: 20px;
+            padding: 10px 20px;
+            background: white;
+            color: #2a5298;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: #f8f9fa;
+            transform: translateX(-5px);
+        }
+
+        @media (max-width: 768px) {
+            .search-box {
+                flex-direction: column;
+            }
+
+            .filters {
+                grid-template-columns: 1fr;
+            }
+
+            .results-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Volver al Chat</a>
+
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Búsqueda Avanzada</h1>
+            <p>Buscar en repositorio normativo, conversaciones y evidencias</p>
+        </div>
+
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Escriba su búsqueda (mínimo 3 caracteres)..." autocomplete="off">
+                <button onclick="realizarBusqueda()">🔍 Buscar</button>
+            </div>
+
+            <div class="search-tabs">
+                <div class="search-tab active" data-tipo="global" onclick="cambiarTipo('global')">🌐 Búsqueda Global</div>
+                <div class="search-tab" data-tipo="repositorio" onclick="cambiarTipo('repositorio')">📚 Repositorio</div>
+                <div class="search-tab" data-tipo="conversaciones" onclick="cambiarTipo('conversaciones')">💬 Conversaciones</div>
+                <div class="search-tab" data-tipo="evidencias" onclick="cambiarTipo('evidencias')">📎 Evidencias</div>
+            </div>
+
+            <div class="filters" id="filters" style="display: none;">
+                <!-- Filtros dinámicos según tipo de búsqueda -->
+            </div>
+        </div>
+
+        <div class="content">
+            <div id="results">
+                <div class="no-results">
+                    <h3>🔍 Inicia una búsqueda</h3>
+                    <p>Escribe al menos 3 caracteres y selecciona el tipo de búsqueda</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tipoBusqueda = 'global';
+        let ultimosResultados = null;
+
+        // Enter para buscar
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') realizarBusqueda();
+        });
+
+        function cambiarTipo(tipo) {
+            tipoBusqueda = tipo;
+            
+            document.querySelectorAll('.search-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-tipo="${tipo}"]`).classList.add('active');
+
+            mostrarFiltros(tipo);
+        }
+
+        function mostrarFiltros(tipo) {
+            const filtersDiv = document.getElementById('filters');
+            
+            if (tipo === 'global') {
+                filtersDiv.style.display = 'none';
+                return;
+            }
+
+            filtersDiv.style.display = 'grid';
+
+            if (tipo === 'repositorio') {
+                filtersDiv.innerHTML = `
+                    <select id="filterTipoDoc">
+                        <option value="">Tipo de documento</option>
+                        <option value="Decreto">Decreto</option>
+                        <option value="Resolución">Resolución</option>
+                        <option value="Lineamiento CNA">Lineamiento CNA</option>
+                        <option value="Guía MEN">Guía MEN</option>
+                    </select>
+                    <select id="filterCategoria">
+                        <option value="">Categoría</option>
+                        <option value="Normatividad Nacional">Normatividad Nacional</option>
+                        <option value="Lineamientos CNA">Lineamientos CNA</option>
+                        <option value="Acreditación">Acreditación</option>
+                    </select>
+                    <select id="filterNormativo">
+                        <option value="">Todos</option>
+                        <option value="true">Solo normativos</option>
+                        <option value="false">Solo no normativos</option>
+                    </select>
+                `;
+            } else if (tipo === 'conversaciones') {
+                filtersDiv.innerHTML = `
+                    <input type="text" id="filterPrograma" placeholder="Programa académico">
+                    <input type="date" id="filterFechaDesde" placeholder="Desde">
+                    <input type="date" id="filterFechaHasta" placeholder="Hasta">
+                `;
+            } else if (tipo === 'evidencias') {
+                filtersDiv.innerHTML = `
+                    <input type="text" id="filterUserId" placeholder="ID de usuario">
+                    <select id="filterTipoEvidencia">
+                        <option value="">Tipo de evidencia</option>
+                        <option value="general">General</option>
+                        <option value="informe">Informe</option>
+                        <option value="plan">Plan de mejoramiento</option>
+                    </select>
+                `;
+            }
+        }
+
+        async function realizarBusqueda() {
+            const query = document.getElementById('searchInput').value.trim();
+
+            if (query.length < 3) {
+                alert('La búsqueda debe tener al menos 3 caracteres');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="loading">🔍 Buscando...</div>';
+
+            try {
+                let url = '';
+                let params = new URLSearchParams({ query });
+
+                if (tipoBusqueda === 'global') {
+                    url = '/api/buscar/global';
+                } else if (tipoBusqueda === 'repositorio') {
+                    url = '/api/buscar/repositorio';
+                    const tipoDoc = document.getElementById('filterTipoDoc')?.value;
+                    const categoria = document.getElementById('filterCategoria')?.value;
+                    const normativo = document.getElementById('filterNormativo')?.value;
+                    if (tipoDoc) params.append('tipoDocumento', tipoDoc);
+                    if (categoria) params.append('categoria', categoria);
+                    if (normativo) params.append('esNormativo', normativo);
+                } else if (tipoBusqueda === 'conversaciones') {
+                    url = '/api/buscar/conversaciones';
+                    const programa = document.getElementById('filterPrograma')?.value;
+                    const desde = document.getElementById('filterFechaDesde')?.value;
+                    const hasta = document.getElementById('filterFechaHasta')?.value;
+                    if (programa) params.append('programa', programa);
+                    if (desde) params.append('fechaDesde', desde);
+                    if (hasta) params.append('fechaHasta', hasta);
+                } else if (tipoBusqueda === 'evidencias') {
+                    url = '/api/buscar/evidencias';
+                    const userId = document.getElementById('filterUserId')?.value;
+                    const tipo = document.getElementById('filterTipoEvidencia')?.value;
+                    if (userId) params.append('userId', userId);
+                    if (tipo) params.append('tipoEvidencia', tipo);
+                }
+
+                const response = await fetch(`${url}?${params.toString()}`);
+                const data = await response.json();
+
+                ultimosResultados = data;
+
+                if (response.ok) {
+                    mostrarResultados(data, query);
+                } else {
+                    resultsDiv.innerHTML = `<div class="no-results"><h3>❌ Error</h3><p>${data.error}</p></div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="no-results"><h3>❌ Error de conexión</h3></div>';
+            }
+        }
+
+        function mostrarResultados(data, query) {
+            const resultsDiv = document.getElementById('results');
+
+            if (tipoBusqueda === 'global') {
+                const total = data.totales.total;
+                
+                if (total === 0) {
+                    resultsDiv.innerHTML = `
+                        <div class="no-results">
+                            <h3>🔍 No se encontraron resultados</h3>
+                            <p>Intenta con otros términos de búsqueda</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = `
+                    <div class="results-header">
+                        <div class="results-count">
+                            📊 ${total} resultados encontrados
+                            <div style="font-size: 0.9rem; font-weight: normal; margin-top: 5px;">
+                                Repositorio: ${data.totales.repositorio} | 
+                                Conversaciones: ${data.totales.conversaciones} | 
+                                Evidencias: ${data.totales.evidencias}
+                            </div>
+                        </div>
+                        <button class="btn-export" onclick="exportarResultados()">📥 Exportar</button>
+                    </div>
+                `;
+
+                // Repositorio
+                if (data.resultados.repositorio.length > 0) {
+                    html += '<h3 style="color: #2a5298; margin-top: 20px; margin-bottom: 15px;">📚 Repositorio Normativo</h3>';
+                    data.resultados.repositorio.forEach(item => {
+                        html += crearCardRepositorio(item, query);
+                    });
+                }
+
+                // Conversaciones
+                if (data.resultados.conversaciones.length > 0) {
+                    html += '<h3 style="color: #2a5298; margin-top: 30px; margin-bottom: 15px;">💬 Conversaciones</h3>';
+                    data.resultados.conversaciones.forEach(item => {
+                        html += crearCardConversacion(item, query);
+                    });
+                }
+
+                // Evidencias
+                if (data.resultados.evidencias.length > 0) {
+                    html += '<h3 style="color: #2a5298; margin-top: 30px; margin-bottom: 15px;">📎 Evidencias</h3>';
+                    data.resultados.evidencias.forEach(item => {
+                        html += crearCardEvidencia(item, query);
+                    });
+                }
+
+                resultsDiv.innerHTML = html;
+
+            } else {
+                // Búsqueda específica
+                const total = data.total;
+                
+                if (total === 0) {
+                    resultsDiv.innerHTML = `
+                        <div class="no-results">
+                            <h3>🔍 No se encontraron resultados</h3>
+                            <p>Intenta con otros términos o filtros</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = `
+                    <div class="results-header">
+                        <div class="results-count">📊 ${total} resultados en ${data.fuente}</div>
+                        <button class="btn-export" onclick="exportarResultados()">📥 Exportar</button>
+                    </div>
+                `;
+
+                data.resultados.forEach(item => {
+                    if (tipoBusqueda === 'repositorio') {
+                        html += crearCardRepositorio(item, query);
+                    } else if (tipoBusqueda === 'conversaciones') {
+                        html += crearCardConversacion(item, query);
+                    } else if (tipoBusqueda === 'evidencias') {
+                        html += crearCardEvidencia(item, query);
+                    }
+                });
+
+                resultsDiv.innerHTML = html;
+            }
+        }
+
+        function crearCardRepositorio(item, query) {
+            const snippet = resaltarTexto(item.contenido.substring(0, 300), query);
+            const fecha = new Date(item.fechaCarga).toLocaleDateString('es-CO');
+            
+            return `
+                <div class="result-card">
+                    <div class="result-title">
+                        <span class="badge badge-repositorio">Repositorio</span>
+                        📄 ${item.nombreArchivo}
+                    </div>
+                    <div class="result-snippet">${snippet}...</div>
+                    <div class="result-meta">
+                        <span>📋 ${item.tipoDocumento}</span>
+                        <span>📁 ${item.categoria}</span>
+                        <span>📅 ${fecha}</span>
+                        <span>${item.esNormativo ? '⚖️ Normativo' : '📄 General'}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function crearCardConversacion(item, query) {
+            const mensajeSnippet = resaltarTexto(item.mensaje.substring(0, 150), query);
+            const respuestaSnippet = resaltarTexto(item.respuesta.substring(0, 200), query);
+            const fecha = new Date(item.timestamp).toLocaleString('es-CO');
+            
+            return `
+                <div class="result-card">
+                    <div class="result-title">
+                        <span class="badge badge-conversacion">Conversación</span>
+                        💬 ${fecha}
+                    </div>
+                    <div class="result-snippet">
+                        <strong>Usuario:</strong> ${mensajeSnippet}...<br>
+                        <strong>Asistente:</strong> ${respuestaSnippet}...
+                    </div>
+                    <div class="result-meta">
+                        ${item.programa ? `<span>🎓 ${item.programa}</span>` : ''}
+                        ${item.nivelFormacion ? `<span>📚 ${item.nivelFormacion}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function crearCardEvidencia(item, query) {
+            const snippet = resaltarTexto(item.contenido.substring(0, 300), query);
+            const fecha = new Date(item.timestamp).toLocaleDateString('es-CO');
+            
+            return `
+                <div class="result-card">
+                    <div class="result-title">
+                        <span class="badge badge-evidencia">Evidencia</span>
+                        📎 ${item.nombreArchivo}
+                    </div>
+                    <div class="result-snippet">${snippet}...</div>
+                    <div class="result-meta">
+                        <span>📋 ${item.tipoEvidencia || 'General'}</span>
+                        <span>📅 ${fecha}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function resaltarTexto(texto, query) {
+            const regex = new RegExp(`(${query})`, 'gi');
+            return texto.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        function exportarResultados() {
+            if (!ultimosResultados) {
+                alert('No hay resultados para exportar');
+                return;
+            }
+
+            const dataStr = JSON.stringify(ultimosResultados, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `busqueda_${tipoBusqueda}_${Date.now()}.json`;
+            link.click();
+        }
+    </script>
+</body>
+</html>
