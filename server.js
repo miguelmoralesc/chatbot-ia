@@ -14,9 +14,14 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY
 });
 
-// Conexión a MongoDB
+// Conexión a MongoDB con configuración optimizada
 let db;
-const mongoClient = new MongoClient(process.env.MONGODB_URI);
+const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://miguelmorales1428_db_user:Qo6JHRT9O0Nf3BKk@cluster0.g1o7k7a.mongodb.net/chatbot_database?retryWrites=true&w=majority&ssl=true&authSource=admin';
+
+const mongoClient = new MongoClient(mongoUri, {
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+});
 
 async function connectDB() {
   try {
@@ -52,16 +57,50 @@ const baseConocimiento = {
   }
 };
 
-// Ruta principal - Chat
+// Ruta principal - Chat con CONTEXTO MEJORADO
 app.post('/api/chat', async (req, res) => {
   try {
-    const { mensaje, conversationId } = req.body;
+    const { mensaje, conversationId, userId } = req.body;
 
     if (!mensaje) {
       return res.status(400).json({ error: 'Mensaje requerido' });
     }
 
-    // Construir contexto con información personalizada
+    const userIdFinal = userId || conversationId || new Date().getTime().toString();
+
+    // 1. OBTENER HISTORIAL RECIENTE (últimas 5 conversaciones del usuario)
+    let mensajesContexto = [];
+    
+    if (db) {
+      try {
+        const historialReciente = await db.collection('conversaciones')
+          .find({ 
+            $or: [
+              { conversationId: userIdFinal },
+              { userId: userIdFinal }
+            ]
+          })
+          .sort({ timestamp: -1 })
+          .limit(5)
+          .toArray();
+
+        // Agregar historial en orden cronológico correcto
+        historialReciente.reverse().forEach(conv => {
+          mensajesContexto.push({
+            role: 'user',
+            content: conv.mensaje
+          });
+          mensajesContexto.push({
+            role: 'assistant',
+            content: conv.respuesta
+          });
+        });
+      } catch (error) {
+        console.log('⚠️ No se pudo cargar historial:', error.message);
+      }
+    }
+
+    // 2. Construir contexto con información personalizada
     const contextoSistema = `Eres un asistente virtual experto en gestión de talleres automotrices.
 
 Información de la empresa:
@@ -73,21 +112,26 @@ Información de la empresa:
 Instrucciones:
 - Responde de forma amigable y profesional
 - Usa la información proporcionada para responder
+- Recuerda el contexto de la conversación anterior
 - Si no sabes algo, sugiere contactar directamente
 - Sé conciso pero informativo`;
 
-    // Llamar a Groq API
+    // 3. Construir array de mensajes con contexto completo
+    const mensajesCompletos = [
+      {
+        role: 'system',
+        content: contextoSistema
+      },
+      ...mensajesContexto, // Historial previo
+      {
+        role: 'user',
+        content: mensaje // Mensaje actual
+      }
+    ];
+
+    // 4. Llamar a Groq API con contexto completo
     const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: contextoSistema
-        },
-        {
-          role: 'user',
-          content: mensaje
-        }
-      ],
+      messages: mensajesCompletos,
       model: 'llama-3.1-8b-instant',
       temperature: 0.7,
       max_tokens: 1024
@@ -95,25 +139,28 @@ Instrucciones:
 
     const respuesta = chatCompletion.choices[0].message.content;
 
-    // Guardar conversación en MongoDB
+    // 5. Guardar conversación en MongoDB
     if (db) {
       await db.collection('conversaciones').insertOne({
-        conversationId: conversationId || new Date().getTime().toString(),
+        conversationId: userIdFinal,
+        userId: userIdFinal,
         mensaje: mensaje,
         respuesta: respuesta,
         timestamp: new Date(),
-        modelo: 'llama-3.1-8b-instant'
+        modelo: 'llama-3.1-8b-instant',
+        contextoUsado: mensajesContexto.length > 0
       });
     }
 
-    // Enviar respuesta
+    // 6. Enviar respuesta
     res.json({
       respuesta: respuesta,
-      conversationId: conversationId || new Date().getTime().toString()
+      conversationId: userIdFinal,
+      contextoAplicado: mensajesContexto.length > 0
     });
 
   } catch (error) {
-    console.error('Error en /api/chat:', error);
+    console.error('❌ Error en /api/chat:', error);
     res.status(500).json({ 
       error: 'Error procesando mensaje',
       detalle: error.message 
@@ -121,7 +168,7 @@ Instrucciones:
   }
 });
 
-// Ruta para obtener historial
+// Ruta para obtener historial completo
 app.get('/api/historial/:conversationId', async (req, res) => {
   try {
     if (!db) {
@@ -129,14 +176,46 @@ app.get('/api/historial/:conversationId', async (req, res) => {
     }
 
     const historial = await db.collection('conversaciones')
-      .find({ conversationId: req.params.conversationId })
+      .find({ 
+        $or: [
+          { conversationId: req.params.conversationId },
+          { userId: req.params.conversationId }
+        ]
+      })
       .sort({ timestamp: 1 })
       .toArray();
 
-    res.json({ historial });
+    res.json({ 
+      historial,
+      total: historial.length 
+    });
   } catch (error) {
-    console.error('Error obteniendo historial:', error);
+    console.error('❌ Error obteniendo historial:', error);
     res.status(500).json({ error: 'Error obteniendo historial' });
+  }
+});
+
+// Ruta para limpiar historial de un usuario
+app.delete('/api/historial/:conversationId', async (req, res) => {
+  try {
+    if (!db) {
+      return res.status(503).json({ error: 'Base de datos no disponible' });
+    }
+
+    const resultado = await db.collection('conversaciones').deleteMany({
+      $or: [
+        { conversationId: req.params.conversationId },
+        { userId: req.params.conversationId }
+      ]
+    });
+
+    res.json({ 
+      mensaje: 'Historial eliminado',
+      eliminados: resultado.deletedCount 
+    });
+  } catch (error) {
+    console.error('❌ Error eliminando historial:', error);
+    res.status(500).json({ error: 'Error eliminando historial' });
   }
 });
 
@@ -145,17 +224,39 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok',
     mongodb: db ? 'conectado' : 'desconectado',
-    groq: process.env.GROQ_API_KEY ? 'configurado' : 'no configurado'
+    groq: process.env.GROQ_API_KEY ? 'configurado' : 'no configurado',
+    timestamp: new Date().toISOString()
   });
+});
+
+// Ruta raíz informativa
+app.get('/', (req, res) => {
+  res.json({
+    servicio: 'Chatbot IA - Taller Automotriz',
+    version: '2.0',
+    endpoints: {
+      chat: 'POST /api/chat',
+      historial: 'GET /api/historial/:conversationId',
+      limpiar: 'DELETE /api/historial/:conversationId',
+      health: 'GET /api/health'
+    }
+  });
+});
+
+// Manejo de errores global
+process.on('unhandledRejection', (error) => {
+  console.error('❌ Error no manejado:', error);
 });
 
 // Iniciar servidor
 async function iniciarServidor() {
   await connectDB();
   app.listen(PORT, () => {
-    console.log(`\n🚀 Servidor iniciado en http://localhost:${PORT}`);
-    console.log(`📡 API disponible en http://localhost:${PORT}/api/chat`);
-    console.log(`🔍 Health check: http://localhost:${PORT}/api/health\n`);
+    console.log('\n' + '='.repeat(60));
+    console.log('🚀 Servidor iniciado en http://localhost:' + PORT);
+    console.log('📡 API disponible en http://localhost:' + PORT + '/api/chat');
+    console.log('🔍 Health check: http://localhost:' + PORT + '/api/health');
+    console.log('='.repeat(60) + '\n');
   });
 }
 
