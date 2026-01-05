@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const Groq = require('groq-sdk');
 const { MongoClient } = require('mongodb');
+const fetch = require('node-fetch'); // Para llamar a Perplexity API
 
 // Configuración
 const app = express();
@@ -57,7 +58,54 @@ const baseConocimiento = {
   }
 };
 
-// Ruta principal - Chat con CONTEXTO MEJORADO
+// FUNCIÓN: Detectar si necesita búsqueda web
+function necesitaBusquedaWeb(mensaje) {
+  const palabrasClave = [
+    'precio', 'costo', 'cuánto cuesta', 'valor',
+    'actual', 'hoy', 'reciente', 'último', 'nueva',
+    'noticias', 'información sobre', 'qué es',
+    'busca', 'investiga', 'encuentra'
+  ];
+  
+  const mensajeLower = mensaje.toLowerCase();
+  return palabrasClave.some(palabra => mensajeLower.includes(palabra));
+}
+
+// FUNCIÓN: Buscar en web con Perplexity
+async function buscarEnWeb(query) {
+  try {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [
+          {
+            role: 'system',
+            content: 'Eres un asistente que busca información actualizada en internet. Responde de forma concisa y precisa.'
+          },
+          {
+            role: 'user',
+            content: query
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 500
+      })
+    });
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || null;
+  } catch (error) {
+    console.error('❌ Error en búsqueda web:', error);
+    return null;
+  }
+}
+
+// Ruta principal - Chat con CONTEXTO Y BÚSQUEDA WEB
 app.post('/api/chat', async (req, res) => {
   try {
     const { mensaje, conversationId, userId } = req.body;
@@ -68,7 +116,16 @@ app.post('/api/chat', async (req, res) => {
 
     const userIdFinal = userId || conversationId || new Date().getTime().toString();
 
-    // 1. OBTENER HISTORIAL RECIENTE (últimas 5 conversaciones del usuario)
+    // 1. DETECTAR SI NECESITA BÚSQUEDA WEB
+    const usarBusquedaWeb = necesitaBusquedaWeb(mensaje);
+    let informacionWeb = null;
+
+    if (usarBusquedaWeb && process.env.PERPLEXITY_API_KEY) {
+      console.log('🔍 Realizando búsqueda web para:', mensaje);
+      informacionWeb = await buscarEnWeb(mensaje);
+    }
+
+    // 2. OBTENER HISTORIAL RECIENTE
     let mensajesContexto = [];
     
     if (db) {
@@ -84,7 +141,6 @@ app.post('/api/chat', async (req, res) => {
           .limit(5)
           .toArray();
 
-        // Agregar historial en orden cronológico correcto
         historialReciente.reverse().forEach(conv => {
           mensajesContexto.push({
             role: 'user',
@@ -100,36 +156,41 @@ app.post('/api/chat', async (req, res) => {
       }
     }
 
-    // 2. Construir contexto con información personalizada
-    const contextoSistema = `Eres un asistente virtual experto en gestión de talleres automotrices.
+    // 3. CONSTRUIR CONTEXTO CON INFORMACIÓN WEB (SI EXISTE)
+    let contextoSistema = `Eres un asistente virtual experto en gestión de talleres automotrices.
 
 Información de la empresa:
 - Empresa: ${baseConocimiento.empresa}
 - Servicios: ${baseConocimiento.servicios.join(', ')}
 - Horarios: ${baseConocimiento.horarios}
-- Contacto: Tel: ${baseConocimiento.contacto.telefono}, Email: ${baseConocimiento.contacto.email}
+- Contacto: Tel: ${baseConocimiento.contacto.telefono}, Email: ${baseConocimiento.contacto.email}`;
 
-Instrucciones:
+    if (informacionWeb) {
+      contextoSistema += `\n\nINFORMACIÓN ACTUALIZADA DE INTERNET:\n${informacionWeb}`;
+    }
+
+    contextoSistema += `\n\nInstrucciones:
 - Responde de forma amigable y profesional
 - Usa la información proporcionada para responder
+- Si hay información actualizada de internet, úsala en tu respuesta
 - Recuerda el contexto de la conversación anterior
 - Si no sabes algo, sugiere contactar directamente
 - Sé conciso pero informativo`;
 
-    // 3. Construir array de mensajes con contexto completo
+    // 4. CONSTRUIR MENSAJES COMPLETOS
     const mensajesCompletos = [
       {
         role: 'system',
         content: contextoSistema
       },
-      ...mensajesContexto, // Historial previo
+      ...mensajesContexto,
       {
         role: 'user',
-        content: mensaje // Mensaje actual
+        content: mensaje
       }
     ];
 
-    // 4. Llamar a Groq API con contexto completo
+    // 5. LLAMAR A GROQ API
     const chatCompletion = await groq.chat.completions.create({
       messages: mensajesCompletos,
       model: 'llama-3.1-8b-instant',
@@ -139,7 +200,7 @@ Instrucciones:
 
     const respuesta = chatCompletion.choices[0].message.content;
 
-    // 5. Guardar conversación en MongoDB
+    // 6. GUARDAR EN MONGODB
     if (db) {
       await db.collection('conversaciones').insertOne({
         conversationId: userIdFinal,
@@ -148,15 +209,17 @@ Instrucciones:
         respuesta: respuesta,
         timestamp: new Date(),
         modelo: 'llama-3.1-8b-instant',
-        contextoUsado: mensajesContexto.length > 0
+        contextoUsado: mensajesContexto.length > 0,
+        busquedaWebUsada: informacionWeb !== null
       });
     }
 
-    // 6. Enviar respuesta
+    // 7. ENVIAR RESPUESTA
     res.json({
       respuesta: respuesta,
       conversationId: userIdFinal,
-      contextoAplicado: mensajesContexto.length > 0
+      contextoAplicado: mensajesContexto.length > 0,
+      busquedaWeb: informacionWeb !== null
     });
 
   } catch (error) {
@@ -195,7 +258,7 @@ app.get('/api/historial/:conversationId', async (req, res) => {
   }
 });
 
-// Ruta para limpiar historial de un usuario
+// Ruta para limpiar historial
 app.delete('/api/historial/:conversationId', async (req, res) => {
   try {
     if (!db) {
@@ -219,21 +282,27 @@ app.delete('/api/historial/:conversationId', async (req, res) => {
   }
 });
 
-// Ruta de salud (health check)
+// Ruta de salud
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok',
     mongodb: db ? 'conectado' : 'desconectado',
     groq: process.env.GROQ_API_KEY ? 'configurado' : 'no configurado',
+    perplexity: process.env.PERPLEXITY_API_KEY ? 'configurado' : 'no configurado',
     timestamp: new Date().toISOString()
   });
 });
 
-// Ruta raíz informativa
+// Ruta raíz
 app.get('/', (req, res) => {
   res.json({
     servicio: 'Chatbot IA - Taller Automotriz',
-    version: '2.0',
+    version: '3.0',
+    funcionalidades: [
+      'Contexto entre conversaciones',
+      'Búsqueda web en tiempo real',
+      'Historial persistente'
+    ],
     endpoints: {
       chat: 'POST /api/chat',
       historial: 'GET /api/historial/:conversationId',
@@ -243,7 +312,7 @@ app.get('/', (req, res) => {
   });
 });
 
-// Manejo de errores global
+// Manejo de errores
 process.on('unhandledRejection', (error) => {
   console.error('❌ Error no manejado:', error);
 });
@@ -254,8 +323,9 @@ async function iniciarServidor() {
   app.listen(PORT, () => {
     console.log('\n' + '='.repeat(60));
     console.log('🚀 Servidor iniciado en http://localhost:' + PORT);
-    console.log('📡 API disponible en http://localhost:' + PORT + '/api/chat');
-    console.log('🔍 Health check: http://localhost:' + PORT + '/api/health');
+    console.log('📡 API Chat: http://localhost:' + PORT + '/api/chat');
+    console.log('🔍 Búsqueda web: ' + (process.env.PERPLEXITY_API_KEY ? '✅ ACTIVA' : '❌ INACTIVA'));
+    console.log('💾 MongoDB: ' + (db ? '✅ CONECTADO' : '❌ DESCONECTADO'));
     console.log('='.repeat(60) + '\n');
   });
 }
